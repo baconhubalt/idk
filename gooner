@@ -13,7 +13,7 @@ import sys
 import traceback
 import io
 
-TOKEN = "MTQ4Mjg2MDQwMDg4OTU2MTM4Mw.GKoAgM.mdiFbTZpUQCTDqewp3_6zOI9JK3JR-rtuuMH18"
+TOKEN = ""
 
 intents = discord.Intents.default()
 intents.message_content = True
