@@ -14,7 +14,6 @@ import traceback
 import io
 import os
 
-# ===== TOKEN FROM ENVIRONMENT VARIABLES =====
 TOKEN = os.getenv("DISCORD_TOKEN")
 if not TOKEN:
     print("❌ ERROR: DISCORD_TOKEN environment variable not set!")
@@ -40,10 +39,8 @@ whitelist_only = False
 dm_log_channel_id = None
 dm_forward_enabled = False
 
-# ===== YOUR DISCORD USER ID =====
 OWNER_ID = 1481722738451284161
 
-# ===== VOICE STAY VARIABLES =====
 voice_stay_tasks = {}
 
 def trim_msg(text, max_len=1990):
@@ -63,14 +60,12 @@ async def get_channel_by_id(channel_id):
     except:
         return None
 
-# ===== PERMISSION CHECKS =====
 def is_owner():
     async def predicate(interaction):
         if interaction.user.id == OWNER_ID:
             return True
         await interaction.response.send_message(
-            "❌ You don't have permission to use this command.\n"
-            "Only the bot owner can use this command.",
+            "❌ You don't have permission to use this command.\nOnly the bot owner can use this command.",
             ephemeral=True
         )
         return False
@@ -83,8 +78,7 @@ def is_whitelisted():
         if interaction.user.id in whitelist:
             return True
         await interaction.response.send_message(
-            "❌ You don't have permission to use this command.\n"
-            "You need to be whitelisted to use this command.",
+            "❌ You don't have permission to use this command.\nYou need to be whitelisted to use this command.",
             ephemeral=True
         )
         return False
@@ -94,7 +88,6 @@ def is_whitelisted():
 async def on_message(message):
     if isinstance(message.channel, discord.DMChannel) and message.author != bot.user:
         print(f"📩 DM from {message.author.name}: {message.content[:100]}")
-        
         if dm_log_channel_id:
             log_channel = bot.get_channel(dm_log_channel_id)
             if log_channel:
@@ -106,7 +99,6 @@ async def on_message(message):
                 embed.add_field(name="From", value=message.author.mention, inline=True)
                 embed.add_field(name="ID", value=message.author.id, inline=True)
                 embed.set_footer(text=f"Received at {message.created_at.strftime('%H:%M:%S')}")
-                
                 if dm_forward_enabled:
                     try:
                         await log_channel.send(embed=embed)
@@ -115,15 +107,11 @@ async def on_message(message):
                         await log_channel.send(embed=embed)
                 else:
                     await log_channel.send(embed=embed)
-        
         if message.content.lower() in ["!help", "help", "hi", "hello"]:
             await message.channel.send("👋 Hi! I'm a bot. Use /help for commands.")
-        
         return
-    
     if message.author == bot.user:
         return
-    
     await bot.process_commands(message)
 
 @bot.event
@@ -137,7 +125,6 @@ async def on_ready():
     print("  ⚠️ NO CONFIRMATION REQUIRED FOR ANY COMMAND!\n")
     print(f"👑 Bot Owner ID: {OWNER_ID}")
     print(f"📋 Whitelist: {len(whitelist)} users\n")
-    
     try:
         synced = await bot.tree.sync()
         print(f"✅ Synced {len(synced)} slash commands")
