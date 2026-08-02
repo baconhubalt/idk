@@ -12,8 +12,14 @@ import random
 import sys
 import traceback
 import io
+import os
 
-TOKEN = ""
+# ===== TOKEN FROM ENVIRONMENT VARIABLES =====
+TOKEN = os.getenv("DISCORD_TOKEN")
+if not TOKEN:
+    print("❌ ERROR: DISCORD_TOKEN environment variable not set!")
+    print("Please set it in Railway: Settings → Variables")
+    sys.exit(1)
 
 intents = discord.Intents.default()
 intents.message_content = True
