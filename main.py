@@ -3,9 +3,22 @@ from discord.ext import commands
 import os
 import sys
 import logging
+from flask import Flask
+import threading
 
 # Setup logging for Railway
 logging.basicConfig(level=logging.INFO)
+
+# Create a simple Flask app for Railway's health checks
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "Bot is running!", 200
+
+def run_web_server():
+    port = int(os.getenv('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 if not TOKEN:
@@ -78,4 +91,10 @@ async def status(interaction: discord.Interaction):
 
 if __name__ == "__main__":
     print("🚀 Starting bot...")
+    
+    # Start web server in a separate thread
+    web_thread = threading.Thread(target=run_web_server, daemon=True)
+    web_thread.start()
+    
+    # Run the Discord bot
     bot.run(TOKEN)
