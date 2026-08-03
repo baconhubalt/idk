@@ -7,17 +7,30 @@ import logging
 # Setup logging for Railway
 logging.basicConfig(level=logging.INFO)
 
+# Print ALL environment variables for debugging
+print("📋 ALL ENVIRONMENT VARIABLES:")
+for key in sorted(os.environ.keys()):
+    if "TOKEN" in key.upper() or "KEY" in key.upper() or "SECRET" in key.upper():
+        # Mask sensitive values
+        value = os.environ[key]
+        masked = f"{value[:5]}...{value[-5:]}" if len(value) > 10 else "***"
+        print(f"  {key} = {masked}")
+    else:
+        print(f"  {key} = {os.environ[key]}")
+
 # Try multiple possible variable names
 TOKEN = (
     os.getenv("DISCORD_TOKEN") or 
     os.getenv("token") or 
     os.getenv("TOKEN") or
-    os.getenv("DISCORD_TOKEN_SHARED")
+    os.getenv("DISCORD_TOKEN_SHARED") or
+    os.getenv("RAILWAY_TOKEN") or
+    os.getenv("DISCORD")
 )
 
 if not TOKEN:
-    print("ERROR: No token found! Checked: DISCORD_TOKEN, token, TOKEN")
-    print("Available environment variables:", list(os.environ.keys()))
+    print("❌ ERROR: No token found!")
+    print("🔍 Checked: DISCORD_TOKEN, token, TOKEN, DISCORD_TOKEN_SHARED, RAILWAY_TOKEN, DISCORD")
     sys.exit(1)
 
 # Mask the token for security (show only first/last few chars)
@@ -90,4 +103,12 @@ async def status(interaction: discord.Interaction):
 
 if __name__ == "__main__":
     print("🚀 Starting bot...")
-    bot.run(TOKEN)
+    try:
+        bot.run(TOKEN)
+    except discord.LoginFailure as e:
+        print(f"❌ Login failed: {e}")
+        print("Please check your token is valid")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        sys.exit(1)
