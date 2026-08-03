@@ -3,27 +3,26 @@ from discord.ext import commands
 import os
 import sys
 import logging
-from flask import Flask
-import threading
 
 # Setup logging for Railway
 logging.basicConfig(level=logging.INFO)
 
-# Create a simple Flask app for Railway's health checks
-app = Flask(__name__)
+# Try multiple possible variable names
+TOKEN = (
+    os.getenv("DISCORD_TOKEN") or 
+    os.getenv("token") or 
+    os.getenv("TOKEN") or
+    os.getenv("DISCORD_TOKEN_SHARED")
+)
 
-@app.route('/')
-def health_check():
-    return "Bot is running!", 200
-
-def run_web_server():
-    port = int(os.getenv('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
-
-TOKEN = os.getenv("DISCORD_TOKEN")
 if not TOKEN:
-    print("ERROR: DISCORD_TOKEN not set!")
+    print("ERROR: No token found! Checked: DISCORD_TOKEN, token, TOKEN")
+    print("Available environment variables:", list(os.environ.keys()))
     sys.exit(1)
+
+# Mask the token for security (show only first/last few chars)
+token_preview = f"{TOKEN[:5]}...{TOKEN[-5:]}" if len(TOKEN) > 10 else "***"
+print(f"✅ Token found: {token_preview}")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -91,10 +90,4 @@ async def status(interaction: discord.Interaction):
 
 if __name__ == "__main__":
     print("🚀 Starting bot...")
-    
-    # Start web server in a separate thread
-    web_thread = threading.Thread(target=run_web_server, daemon=True)
-    web_thread.start()
-    
-    # Run the Discord bot
     bot.run(TOKEN)
