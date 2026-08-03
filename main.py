@@ -4,8 +4,9 @@ import os
 import sys
 import logging
 import asyncio
-from flask import Flask, threading
+import threading
 import time
+from flask import Flask
 
 # Setup logging for Railway
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +24,13 @@ def health():
 
 def run_web_server():
     port = int(os.getenv('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=False,
+        use_reloader=False,
+        threaded=True
+    )
 
 # Try multiple possible variable names
 TOKEN = (
@@ -51,9 +58,6 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
-# Track voice connection status
-voice_status = {}
-
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user}")
@@ -66,7 +70,6 @@ async def on_ready():
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    # Log voice state changes for debugging
     if member == bot.user:
         if before.channel is None and after.channel is not None:
             print(f"🔊 Bot joined {after.channel.name}")
@@ -83,7 +86,6 @@ async def ping(interaction: discord.Interaction):
 @bot.tree.command(name="join", description="Make the bot join your voice channel")
 async def join(interaction: discord.Interaction):
     try:
-        # Defer response to give more time
         await interaction.response.defer(ephemeral=True)
         
         if not interaction.user.voice:
@@ -97,12 +99,10 @@ async def join(interaction: discord.Interaction):
                 await interaction.followup.send(f"✅ Already connected to **{voice_channel.name}**!", ephemeral=True)
                 return
             else:
-                # Move to the new channel
                 await interaction.guild.voice_client.move_to(voice_channel)
                 await interaction.followup.send(f"✅ Moved to **{voice_channel.name}**!", ephemeral=True)
                 return
         
-        # Connect to voice channel
         await voice_channel.connect()
         await interaction.followup.send(f"✅ Joined **{voice_channel.name}**!", ephemeral=True)
         
@@ -126,10 +126,7 @@ async def leave(interaction: discord.Interaction):
             await interaction.followup.send("❌ I'm not in a voice channel!", ephemeral=True)
             return
         
-        # Get channel name before leaving
         channel_name = interaction.guild.voice_client.channel.name
-        
-        # Disconnect
         await interaction.guild.voice_client.disconnect()
         await interaction.followup.send(f"✅ Left **{channel_name}**!", ephemeral=True)
         
@@ -169,7 +166,6 @@ async def disconnect(interaction: discord.Interaction):
     try:
         await interaction.response.defer(ephemeral=True)
         
-        # Check if user has admin or manage channels permission
         if not interaction.user.guild_permissions.administrator:
             await interaction.followup.send("❌ You need administrator permissions to use this command!", ephemeral=True)
             return
@@ -206,7 +202,7 @@ if __name__ == "__main__":
     # Start web server in a separate thread
     web_thread = threading.Thread(target=run_web_server, daemon=True)
     web_thread.start()
-    print("✅ Web server started on port", os.getenv('PORT', 8080))
+    print(f"✅ Web server started on port {os.getenv('PORT', 8080)}")
     
     try:
         bot.run(TOKEN, reconnect=True)
